@@ -2,9 +2,6 @@ name: ExampleProject - Build and preview deploy
 on:
   pull_request:
     types: [opened, synchronize, closed]
-    paths:
-      - src/**
-      - .github/workflows/preview-deploy.yml
     branches:
       - main
 jobs:
