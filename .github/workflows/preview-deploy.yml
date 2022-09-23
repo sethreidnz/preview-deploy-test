@@ -37,7 +37,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/src/bin/DeploymentPackage.zip
           key: ${{ github.sha }}
-      - uses: sethreidnz/azure-webapps-preview-deploy
+      - uses: sethreidnz/azure-webapps-preview-deploy@v0.1.0
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
