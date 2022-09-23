@@ -1,0 +1,55 @@
+name: ExampleProject - Build and preview deploy
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    paths:
+      - src/**
+      - .github/workflows/preview-deploy.yml
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.x.x
+      - name: Publish
+        working-directory: src
+        run: dotnet publish --output ./bin/publish
+      - name: zip output
+        working-directory: src/bin/publish
+        run: zip -r ${{ github.workspace }}/src/bin/DeploymentPackage.zip .
+      - uses: actions/cache@v2
+        id: build-package
+        with:
+          path: ${{ github.workspace }}/src/bin/DeploymentPackage.zip
+          key: ${{ github.sha }}
+
+  preview-deploy:
+    needs: [build]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        id: build-package
+        with:
+          path: ${{ github.workspace }}/src/bin/DeploymentPackage.zip
+          key: ${{ github.sha }}
+      - uses: sethreidnz/azure-webapps-preview-deploy
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          subscriptionId: "40249efd-1249-45f2-89e3-0ee812cafac8"
+          resourceGroup: "sethreid-preview-slot-playground"
+          webAppName: "preview-deploy"
+          storageAccount: "previewdeploy"
+          storageContainer: "preview-deploy-packages"
+          deployPackagePath: "${{ github.workspace }}/src/bin/DeploymentPackage.zip"
